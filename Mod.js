@@ -115,8 +115,7 @@ document.addEventListener("keydown", (event) => {
 // Important Stuff
 let phaser = window.stores.phaser;
 let players = phaser.scene.characterManager.characters;
-let sceneData = []
-
+let recentIDs = [];
 
 // displayEmoji function
 function displayEmoji(playerID, data) {
@@ -155,7 +154,7 @@ function setSkin(playerID, data) {
 
 // requestData function
 function requestData(playerID) {
-    
+
     for (let [id, player] of players) {
         if (player.id == playerID) {
             sendData("setSkin",phaser.mainCharacter.skin.skinId)
@@ -224,7 +223,7 @@ function sendData(dataType, data) {
                     correct: true
                 },
                 {
-                    text: "-",
+                    text: Math.floor(Math.random() * 10000000).toString(),
                     correct: true
                 }
                 ]
@@ -239,9 +238,7 @@ function sendData(dataType, data) {
 }
 
 
-
 // Start of loop
-
 
 function fetchDataAndProcess() {
 
@@ -263,19 +260,20 @@ function fetchDataAndProcess() {
                     let playerID = loadedData[0].text
                     let dataType = loadedData[1].text
                     let messageData = loadedData[2].text
+                    let messageID = loadedData[3].text
 
                     const firstQuestionAnswers = data.kit.questions[0].answers;
                     let phaser = window.stores.phaser;
                     let players = phaser.scene.characterManager.characters;
 
-                    let dataID = playerID + dataType + messageData
-                    
-                    if ( sceneData.includes(dataID) == true ) {
-                        
+                    if (recentIDs.includes(messageID) == true) {
+                        //Ignore request
                     } else {
-                        sceneData.push(dataID)
-                        setTimeout(() => delete sceneData.dataID, 3000);
-                
+                    
+                        // Add the ID to the recent ID's list and
+                        // delete it in 10000 ms
+                        recentIDs.push(messageID)
+                        setTimeout(function () {recentIDs.shift()}, 10000)
                         if (dataType == "displayEmoji") {
                             displayEmoji(playerID, messageData)
                         } else if (dataType == "setSkin") {
@@ -289,16 +287,10 @@ function fetchDataAndProcess() {
                         }
                     }
                 }
-
-
-            } else {
-                //console.error("Data structure is not as expected.");
             }
         })
-        .catch(error => {
-            //console.error("Error:", error);
-        });
 }
+
 
 // Run the function every 0.1 seconds
 setInterval(fetchDataAndProcess, 100);
